@@ -1,0 +1,6 @@
+# requirements-lite.txt
+Flask==2.3.3
+pycryptodome==3.19.0
+requests==2.31.0
+urllib3==2.1.0
+colorama==0.4.6
