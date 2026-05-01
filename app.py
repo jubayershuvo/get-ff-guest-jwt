@@ -63,12 +63,11 @@ def get_jwt_endpoint():
     - region: Server region (optional, default: BD)
     
     Example:
-    /get_jwt?uid=4754356819&password=1589073FEF11EA9A10FDB0A2B6C05C4337C95C6503DF2EAF25E5AEF37EAA4034&region=BD
+    /get_jwt?uid=4754356819&password=1589073FEF11EA9A10FDB0A2B6C05C4337C95C6503DF2EAF25E5AEF37EAA4034
     """
     
     uid = request.args.get('uid')
     password = request.args.get('password')
-    region = request.args.get('region', 'BD').upper()
     
     if not uid:
         return jsonify({
@@ -85,7 +84,7 @@ def get_jwt_endpoint():
         }), 400
     
     try:
-        result = getJwt(uid, password, region)
+        result = getJwt(uid, password)
         
         # Add timestamp to response
         result["timestamp"] = datetime.now().isoformat()
