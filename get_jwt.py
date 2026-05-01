@@ -15,6 +15,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 hex_key = "32656534343831396539623435393838343531343130363762323831363231383734643064356437616639643866376530306331653534373135623764316533"
 key = bytes.fromhex(hex_key)
 
+REGION_LANG = {"ME": "ar","IND": "hi","ID": "id","VN": "vi","TH": "th","BD": "bn","PK": "ur","TW": "zh","EU": "en","CIS": "ru","NA": "en","SAC": "es","BR": "pt"}
+REGION_URLS = {"IND": "https://loginbp.ggpolarbear.com","ID": "https://clientbp.ggblueshark.com","BR": "https://client.us.freefiremobile.com","ME": "https://clientbp.common.ggbluefox.com","VN": "https://clientbp.ggblueshark.com","TH": "https://clientbp.common.ggbluefox.com","CIS": "https://clientbp.ggblueshark.com","BD": "https://loginbp.ggblueshark.com","PK": "https://loginbp.ggpolarbear.com","SG": "https://clientbp.ggblueshark.com","NA": "https://client.us.freefiremobile.com","SAC": "https://client.us.freefiremobile.com","EU": "https://clientbp.ggblueshark.com","TW": "https://clientbp.ggblueshark.com"}
 
 # ==================== PROTOBUF FUNCTIONS ====================
 def EnC_Vr(N):
@@ -120,7 +122,7 @@ def get_access_token(uid, password):
         print(f"[-] Error getting access token: {e}")
         return None, None
 
-def major_login(uid, password):
+def major_login(uid, password, region="BD"):
     """
     Step 2: Login to get JWT using existing UID/Password
     """
@@ -133,7 +135,7 @@ def major_login(uid, password):
     print(f"[+] Access token obtained")
     print(f"[*] Performing MajorLogin...")
     
-    lang = 'en'  # Default language, can be modified based on region if needed
+    lang = REGION_LANG.get(region, "en")
     lang_b = lang.encode('ascii')
     
     headers = {
@@ -142,7 +144,7 @@ def major_login(uid, password):
         "Connection": "Keep-Alive",
         "Content-Type": "application/x-www-form-urlencoded",
         "Expect": "100-continue",
-        "Host": "loginbp.ggpolarbear.com",
+        "Host": "loginbp.ggblueshark.com",
         "ReleaseVersion": "OB53",
         "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 9; ASUS_I005DA Build/PI)",
         "X-GA": "v1 1",
@@ -163,7 +165,7 @@ def major_login(uid, password):
 
 
     
-    url = "https://loginbp.ggpolarbear.com/MajorLogin"
+    url = REGION_URLS[region]+'/MajorLogin'
     print(f"[*] Sending MajorLogin request to {url}...")
     
     try:
@@ -192,6 +194,7 @@ def major_login(uid, password):
                         "password": password,
                         "open_id": open_id,
                         "access_token": access_token,
+                        "region": region
                     }
                     
                     # Decode JWT to get details
@@ -203,7 +206,6 @@ def major_login(uid, password):
                         decoded = json.loads(base64.urlsafe_b64decode(payload_b64))
                         result["external_id"] = decoded.get("external_id")
                         result["signature_md5"] = decoded.get("signature_md5")
-                        result["region"] = decoded.get("lock_region")
                     except:
                         pass
                     
@@ -218,7 +220,7 @@ def major_login(uid, password):
         return {"success": False, "message": f"Error: {str(e)}"}
 
 
-def getJwt(uid, password):
+def getJwt(uid, password, region="BD"):
     """
     Get JWT from existing UID and Password
     
@@ -232,9 +234,10 @@ def getJwt(uid, password):
     """
     print(f"\n{'='*50}")
     print(f"Getting JWT for UID: {uid}")
+    print(f"Region: {region}")
     print(f"{'='*50}\n")
     
-    result = major_login(uid, password)
+    result = major_login(uid, password, region)
     
     if result["success"]:
         print(f"\n✅ SUCCESS!")
