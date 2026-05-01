@@ -16,7 +16,7 @@ hex_key = "326565343438313965396234353938383435313431303637623238313632313837346
 key = bytes.fromhex(hex_key)
 
 REGION_LANG = {"ME": "ar","IND": "hi","ID": "id","VN": "vi","TH": "th","BD": "bn","PK": "ur","TW": "zh","EU": "en","CIS": "ru","NA": "en","SAC": "es","BR": "pt"}
-REGION_URLS = {"IND": "https://loginbp.ggpolarbear.com","ID": "https://clientbp.ggblueshark.com","BR": "https://client.us.freefiremobile.com","ME": "https://clientbp.common.ggbluefox.com","VN": "https://clientbp.ggblueshark.com","TH": "https://clientbp.common.ggbluefox.com","CIS": "https://clientbp.ggblueshark.com","BD": "https://loginbp.ggblueshark.com","PK": "https://clientbp.ggblueshark.com","SG": "https://clientbp.ggblueshark.com","NA": "https://client.us.freefiremobile.com","SAC": "https://client.us.freefiremobile.com","EU": "https://clientbp.ggblueshark.com","TW": "https://clientbp.ggblueshark.com"}
+REGION_URLS = {"IND": "https://loginbp.ggpolarbear.com","ID": "https://clientbp.ggblueshark.com","BR": "https://client.us.freefiremobile.com","ME": "https://clientbp.common.ggbluefox.com","VN": "https://clientbp.ggblueshark.com","TH": "https://clientbp.common.ggbluefox.com","CIS": "https://clientbp.ggblueshark.com","BD": "https://loginbp.ggblueshark.com","PK": "https://loginbp.ggpolarbear.com","SG": "https://clientbp.ggblueshark.com","NA": "https://client.us.freefiremobile.com","SAC": "https://client.us.freefiremobile.com","EU": "https://clientbp.ggblueshark.com","TW": "https://clientbp.ggblueshark.com"}
 
 # ==================== PROTOBUF FUNCTIONS ====================
 def EnC_Vr(N):
