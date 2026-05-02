@@ -1,6 +1,6 @@
 """
 Flask API for Free Fire JWT Generation
-Endpoint: /get_jwt?uid=&password=&region=
+Endpoint: /get_jwt?uid=&password=
 """
 
 from flask import Flask, request, jsonify
@@ -55,20 +55,18 @@ def format_expiry(exp_timestamp):
 @app.route('/get_jwt', methods=['GET'])
 def get_jwt_endpoint():
     """
-    API Endpoint to get JWT from UID, Password, and Region
+    API Endpoint to get JWT from UID, Password
     
     Query Parameters:
     - uid: Account UID (required)
     - password: Account password (required)
-    - region: Server region (optional, default: BD)
     
     Example:
-    /get_jwt?uid=4754356819&password=1589073FEF11EA9A10FDB0A2B6C05C4337C95C6503DF2EAF25E5AEF37EAA4034&region=BD
+    /get_jwt?uid=4754356819&password=1589073FEF11EA9A10FDB0A2B6C05C4337C95C6503DF2EAF25E5AEF37EAA4034
     """
     
     uid = request.args.get('uid')
     password = request.args.get('password')
-    region = request.args.get('region', 'BD').upper()
     
     if not uid:
         return jsonify({
@@ -85,7 +83,8 @@ def get_jwt_endpoint():
         }), 400
     
     try:
-        result = getJwt(uid, password, region)
+        result = getJwt(uid, password)
+        print(result)
         
         # Add timestamp to response
         result["timestamp"] = datetime.now().isoformat()
@@ -188,9 +187,8 @@ def index():
                 "parameters": {
                     "uid": "required - Account UID",
                     "password": "required - Account password", 
-                    "region": "optional - Server region (BD, IND, BR, US, etc.) default: BD"
                 },
-                "example": "/get_jwt?uid=4754356819&password=your_password&region=BD"
+                "example": "/get_jwt?uid=4754356819&password=your_password"
             },
             "/decode_jwt": {
                 "method": "GET or POST",

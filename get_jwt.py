@@ -9,6 +9,8 @@ import json
 import urllib3
 import base64
 
+from mjor_json import extract_from_http_response
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ==================== CONSTANTS ====================
@@ -16,7 +18,6 @@ hex_key = "326565343438313965396234353938383435313431303637623238313632313837346
 key = bytes.fromhex(hex_key)
 
 REGION_LANG = {"ME": "ar","IND": "hi","ID": "id","VN": "vi","TH": "th","BD": "bn","PK": "ur","TW": "zh","EU": "en","CIS": "ru","NA": "en","SAC": "es","BR": "pt"}
-REGION_URLS = {"IND": "https://loginbp.ggpolarbear.com","ID": "https://clientbp.ggblueshark.com","BR": "https://client.us.freefiremobile.com","ME": "https://clientbp.common.ggbluefox.com","VN": "https://clientbp.ggblueshark.com","TH": "https://clientbp.common.ggbluefox.com","CIS": "https://clientbp.ggblueshark.com","BD": "https://loginbp.ggblueshark.com","PK": "https://loginbp.ggpolarbear.com","SG": "https://clientbp.ggblueshark.com","NA": "https://client.us.freefiremobile.com","SAC": "https://client.us.freefiremobile.com","EU": "https://clientbp.ggblueshark.com","TW": "https://clientbp.ggblueshark.com"}
 
 # ==================== PROTOBUF FUNCTIONS ====================
 def EnC_Vr(N):
@@ -122,7 +123,31 @@ def get_access_token(uid, password):
         print(f"[-] Error getting access token: {e}")
         return None, None
 
-def major_login(uid, password, region="BD"):
+def decode_jwt_payload(jwt_token):
+    """
+    Decode JWT payload to extract expiry and other data
+    """
+    try:
+        # Split JWT and get payload (second part)
+        parts = jwt_token.split('.')
+        if len(parts) >= 2:
+            payload_b64 = parts[1]
+            # Add padding if needed
+            padding = 4 - (len(payload_b64) % 4)
+            if padding != 4:
+                payload_b64 += '=' * padding
+            
+            # Decode base64
+            decoded = base64.urlsafe_b64decode(payload_b64)
+            payload = json.loads(decoded)
+            
+            return payload
+    except Exception as e:
+        print(f"Error decoding JWT: {e}")
+    return None
+
+
+def major_login(uid, password):
     """
     Step 2: Login to get JWT using existing UID/Password
     """
@@ -135,7 +160,7 @@ def major_login(uid, password, region="BD"):
     print(f"[+] Access token obtained")
     print(f"[*] Performing MajorLogin...")
     
-    lang = REGION_LANG.get(region, "en")
+    lang = 'en'  # Default to English, can be adjusted based on region
     lang_b = lang.encode('ascii')
     
     headers = {
@@ -152,7 +177,7 @@ def major_login(uid, password, region="BD"):
     }
     
     # Login Payload Template
-    payload = b'\x1a\x132025-08-30 05:19:21"\tfree fire(\x01:\x081.123.10B2Android OS 9 / API-28 (PI/rel.cjw.20220518.114133)J\x08HandheldR\nATM MobilsZ\x04WIFI`\xb6\nh\xee\x05r\x03300z\x1fARMv7 VFPv3 NEON VMH | 2400 | 2\x80\x01\xc9\x0f\x8a\x01\x0fAdreno (TM) 640\x92\x01\rOpenGL ES 3.2\x9a\x01+Google|dfa4ab4b-9dc4-454e-8065-e70c733fa53f\xa2\x01\x0e105.235.139.91\xaa\x01\x02' + lang_b + b'\xb2\x01 1d8ec0240ede109973f3321b9354b44d\xba\x01\x014\xc2\x01\x08Handheld\xca\x01\x10Asus ASUS_I005DA\xea\x01@afcfbf13334be42036e4f742c80b956344bed760ac91b3aff9b607a610ab4390\xf0\x01\x01\xca\x02\nATM Mobils\xd2\x02\x04WIFI\xca\x03 7428b253defc164018c604a1ebbfebdf\xe0\x03\xa8\x81\x02\xe8\x03\xf6\xe5\x01\xf0\x03\xaf\x13\xf8\x03\x84\x07\x80\x04\xe7\xf0\x01\x88\x04\xa8\x81\x02\x90\x04\xe7\xf0\x01\x98\x04\xa8\x81\x02\xc8\x04\x01\xd2\x04=/data/app/com.dts.freefireth-PdeDnOilCSFn37p1AH_FLg==/lib/arm\xe0\x04\x01\xea\x04_2087f61c19f57f2af4e7feff0b24d9d9|/data/app/com.dts.freefireth-PdeDnOilCSFn37p1AH_FLg==/base.apk\xf0\x04\x03\xf8\x04\x01\x8a\x05\x0232\x9a\x05\n2019118692\xb2\x05\tOpenGLES2\xb8\x05\xff\x7f\xc0\x05\x04\xe0\x05\xf3F\xea\x05\x07android\xf2\x05pKqsHT5ZLWrYljNb5Vqh//yFRlaPHSO9NWSQsVvOmdhEEn7W+VHNUK+Q+fduA3ptNrGB0Ll0LRz3WW0jOwesLj6aiU7sZ40p8BfUE/FI/jzSTwRe2\xf8\x05\xfb\xe4\x06\x88\x06\x01\x90\x06\x01\x9a\x06\x014\xa2\x06\x014\xb2\x06"GQ@O\x00\x0e^\x00D\x06UA\x0ePM\r\x13hZ\x07T\x06\x0cm\\V\x0ejYV;\x0bU5'
+    payload = b'\x1a\x132025-08-30 05:19:21"\tfree fire(\x01:\x081.114.13B2Android OS 9 / API-28 (PI/rel.cjw.20220518.114133)J\x08HandheldR\nATM MobilsZ\x04WIFI`\xb6\nh\xee\x05r\x03300z\x1fARMv7 VFPv3 NEON VMH | 2400 | 2\x80\x01\xc9\x0f\x8a\x01\x0fAdreno (TM) 640\x92\x01\rOpenGL ES 3.2\x9a\x01+Google|dfa4ab4b-9dc4-454e-8065-e70c733fa53f\xa2\x01\x0e105.235.139.91\xaa\x01\x02' + lang_b + b'\xb2\x01 1d8ec0240ede109973f3321b9354b44d\xba\x01\x014\xc2\x01\x08Handheld\xca\x01\x10Asus ASUS_I005DA\xea\x01@afcfbf13334be42036e4f742c80b956344bed760ac91b3aff9b607a610ab4390\xf0\x01\x01\xca\x02\nATM Mobils\xd2\x02\x04WIFI\xca\x03 7428b253defc164018c604a1ebbfebdf\xe0\x03\xa8\x81\x02\xe8\x03\xf6\xe5\x01\xf0\x03\xaf\x13\xf8\x03\x84\x07\x80\x04\xe7\xf0\x01\x88\x04\xa8\x81\x02\x90\x04\xe7\xf0\x01\x98\x04\xa8\x81\x02\xc8\x04\x01\xd2\x04=/data/app/com.dts.freefireth-PdeDnOilCSFn37p1AH_FLg==/lib/arm\xe0\x04\x01\xea\x04_2087f61c19f57f2af4e7feff0b24d9d9|/data/app/com.dts.freefireth-PdeDnOilCSFn37p1AH_FLg==/base.apk\xf0\x04\x03\xf8\x04\x01\x8a\x05\x0232\x9a\x05\n2019118692\xb2\x05\tOpenGLES2\xb8\x05\xff\x7f\xc0\x05\x04\xe0\x05\xf3F\xea\x05\x07android\xf2\x05pKqsHT5ZLWrYljNb5Vqh//yFRlaPHSO9NWSQsVvOmdhEEn7W+VHNUK+Q+fduA3ptNrGB0Ll0LRz3WW0jOwesLj6aiU7sZ40p8BfUE/FI/jzSTwRe2\xf8\x05\xfb\xe4\x06\x88\x06\x01\x90\x06\x01\x9a\x06\x014\xa2\x06\x014\xb2\x06"GQ@O\x00\x0e^\x00D\x06UA\x0ePM\r\x13hZ\x07T\x06\x0cm\\V\x0ejYV;\x0bU5'
     
     # Replace placeholders
     data = payload
@@ -162,82 +187,90 @@ def major_login(uid, password, region="BD"):
     # Encrypt
     encrypted = encrypt_api(data.hex())
     Final_Payload = encrypted
-
-
     
-    url = REGION_URLS[region]+'/MajorLogin'
-    print(f"[*] Sending MajorLogin request to {url}...")
+    url = "https://loginbp.ggblueshark.com/MajorLogin"
     
     try:
         response = requests.post(url, headers=headers, data=Final_Payload, verify=False, timeout=15)
-       
         
+        # Get protobuf data from response content
+        protobuf_data = response.content
         
-        if response.status_code == 200:
-            # Extract JWT from response
-            response_text = response.text
-            print(f"[+] MajorLogin response: {response_text}")
-
-            if "eyJh" in response_text:
-                start_idx = response_text.find("eyJh")
-                jwt_token = response_text[start_idx:]
-                
-                # Trim to valid JWT
-                dot_positions = [i for i, c in enumerate(jwt_token) if c == '.']
-                if len(dot_positions) >= 2:
-                    jwt_token = jwt_token[:dot_positions[1] + 44]
-                    
-                    result = {
-                        "success": True,
-                        "jwt_token": jwt_token,
-                        "uid": uid,
-                        "password": password,
-                        "open_id": open_id,
-                        "access_token": access_token,
-                        "region": region
-                    }
-                    
-                    # Decode JWT to get details
-                    try:
-                        payload_b64 = jwt_token.split('.')[1]
-                        padding = 4 - (len(payload_b64) % 4)
-                        if padding != 4:
-                            payload_b64 += '=' * padding
-                        decoded = json.loads(base64.urlsafe_b64decode(payload_b64))
-                        result["external_id"] = decoded.get("external_id")
-                        result["signature_md5"] = decoded.get("signature_md5")
-                    except:
-                        pass
-                    
-                    print(f"[+] JWT obtained successfully!")
-                    return result
-            else:
-                return {"success": False, "message": "JWT not found in response"}
-        else:
-            return {"success": False, "message": f"MajorLogin failed: {response.status_code}"}
+        # Extract MajorLoginRes from protobuf
+        if response.status_code == 200 and len(response.content) > 10:
+            major_res_data = extract_from_http_response(protobuf_data)
             
+            if major_res_data:
+                
+                # Check if login was successful
+                if major_res_data.get('account_id'):
+                    return {
+                        "success": True,
+                        "access_token": access_token,
+                        "open_id": open_id,
+                        "account_id": major_res_data.get('account_id'),
+                        "lock_region": major_res_data.get('lock_region'),
+                        "region": major_res_data.get('lock_region'),
+                        "noti_region": major_res_data.get('noti_region'),
+                        "ip_region": major_res_data.get('ip_region'),
+                        "jwt_token": major_res_data.get('token'),
+                        "server_url": major_res_data.get('server_url'),
+                        "emulator_score": major_res_data.get('emulator_score'),
+                        "queue_info": major_res_data.get('queue_info'),
+                        "blacklist": major_res_data.get('blacklist'),
+                    }
+                else:
+                    # Check if in queue
+                    if major_res_data.get('queue_info') and major_res_data.get('queue_info', {}).get('queue_position', 0) > 0:
+                        return {
+                            "success": False, 
+                            "in_queue": True,
+                            "queue_info": major_res_data.get('queue_info'),
+                            "message": f"In login queue. Position: {major_res_data.get('queue_info', {}).get('queue_position')}"
+                        }
+                    else:
+                        return {"success": False, "message": "Login failed - no account_id in response", "data": major_res_data}
+            else:
+                # Try to parse as JSON fallback
+                try:
+                    response_json = response.json()
+                    if response_json.get('success') and response_json.get('jwt_token'):
+                        return {
+                            "success": True,
+                            "account_id": response_json.get('account_id'),
+                            "jwt_token": response_json.get('jwt_token'),
+                            "access_token": response_json.get('access_token'),
+                            "uid": response_json.get('uid'),
+                            "nickname": response_json.get('jwt_payload', {}).get('nickname'),
+                            "lock_region": response_json.get('jwt_payload', {}).get('lock_region')
+                        }
+                    else:
+                        return {"success": False, "message": "Failed to extract MajorLoginRes", "raw_response": response.text[:500]}
+                except:
+                    return {"success": False, "message": "Failed to parse response as protobuf or JSON", "raw_response": response.text[:500]}
+        else:
+            return {"success": False, "message": f"MajorLogin failed with status: {response.status_code}"}
+            
+    except requests.exceptions.Timeout:
+        return {"success": False, "message": "MajorLogin request timed out"}
     except Exception as e:
-        return {"success": False, "message": f"Error: {str(e)}"}
-
-
-def getJwt(uid, password, region="BD"):
+        return {"success": False, "message": f"MajorLogin error: {str(e)}"}
+def getJwt(uid, password):
     """
     Get JWT from existing UID and Password
     
     Parameters:
     - uid: Account UID (e.g., "4754356819")
     - password: Account password
-    - region: Server region (BD, IND, BR, US, etc.)
     
     Returns:
     - Dictionary with JWT token and account info
     """
     print(f"\n{'='*50}")
     print(f"Getting JWT for UID: {uid}")
-    print(f"Region: {region}")
     print(f"{'='*50}\n")
     
-    result = major_login(uid, password, region)
+    result = major_login(uid, password)
     
     if result["success"]:
         print(f"\n✅ SUCCESS!")
