@@ -84,7 +84,6 @@ def get_jwt_endpoint():
     
     try:
         result = getJwt(uid, password)
-        print(result)
         
         # Add timestamp to response
         result["timestamp"] = datetime.now().isoformat()
